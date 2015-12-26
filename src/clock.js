@@ -7,10 +7,8 @@ Clock = function(dom, opts) {
 	this.dom = dom;
 	opts = opts || {};
 	this.size = opts.size || 400;
-	this.changeTimezone( opts.timezone );
 	this._render();
-	this._updateClock();
-	setInterval( this._updateClock.bind(this), 1000 );
+	this.changeTimezone( opts.timezone );
 };
 
 Clock.prototype = {
@@ -21,7 +19,7 @@ Clock.prototype = {
 	_intervalId: null,
 
 	_template: function() {
-		var s = '<svg id="clockSVG" width="SIZE" height="SIZE" viewBox="0 0 1 1" xmlns="http://www.w3.org/2000/svg" version="1.1">\
+		var s = '<svg width="SIZE" height="SIZE" viewBox="0 0 1 1" xmlns="http://www.w3.org/2000/svg" version="1.1">\
 					<defs>\
 						<radialGradient id="clock-dial-reflex" gradientUnits="objectBoundingBox" cx="0.5" cy="-0.4" r="1.8">\
 							<stop offset="0.3" stop-color="rgba(255, 255, 255, 1)" />\
@@ -52,6 +50,19 @@ Clock.prototype = {
 		}
 	},
 
+	/**
+	 * Change the timezone.
+	 * @param timezone string
+	 */
+	changeTimezone: function(timezone) {
+		if (timezone && typeof moment != "undefined" && typeof moment.tz != "undefined") {
+			this.timezone = timezone;
+			this.now = this._nowMoment;
+		}
+		else this.now = this._nowDefault;
+		if (this._isInitialized) this._updateClock();
+	},
+
 	_nowDefault: function() {
 		var now = new Date();
 		return {
@@ -70,29 +81,16 @@ Clock.prototype = {
 		};
 	},
 
-	/**
-	 * Change the timezone.
-	 * @param timezone string
-	 */
-	changeTimezone: function(timezone) {
-		if (timezone && typeof moment != "undefined" && typeof moment.tz != "undefined") {
-			this.timezone = timezone;
-			this.now = this._nowMoment;
-		}
-		else this.now = this._nowDefault;
-		if (this._isInitialized) this._updateClock();
-	},
-
 	_updateClock: function () {
 		var now;
 
 		now = this.now();
-		this.transformHand( this._secondHand, now.seconds * 6 );
-		this.transformHand( this._minuteHand, now.minutes * 6 );
-		this.transformHand( this._hourHand, (now.hours%12) * 30 );
+		this._transformHand( this._secondHand, now.seconds * 6 );
+		this._transformHand( this._minuteHand, now.minutes * 6 );
+		this._transformHand( this._hourHand, (now.hours%12) * 30 );
 	},
 
-	transformHand: function(transform, angle) {
+	_transformHand: function(transform, angle) {
 		transform.setAttributeNS( null, "transform", "rotate(" + angle + ",0.5,0.5)" );
 	},
 
